@@ -64,6 +64,6 @@ The prototype consists of sensor nodes installed on slopes and near water bodies
 
 ## Contributors
 
-Agalya M
-Gobika N
-Priyadharshini R
+- Agalya M
+- Gobika N
+- Priyadharshini R
