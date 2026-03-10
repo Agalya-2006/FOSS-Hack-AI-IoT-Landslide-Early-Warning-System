@@ -1,0 +1,2 @@
+System Architecture:
+Sensors → ESP32 → Cloud → AI Model → Alert System
