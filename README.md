@@ -56,11 +56,11 @@ The prototype consists of sensor nodes installed on slopes and near water bodies
 
 ## Installation
 
-Install Python and Arduino IDE.
-Connect sensors to ESP32 or Arduino.
-Upload firmware using Arduino IDE.
-Run the AI prediction script using Python.
-Launch the dashboard to monitor sensor data and alerts.
+1. Install Python and Arduino IDE.
+2. Connect sensors to ESP32 or Arduino.
+3. Upload firmware using Arduino IDE.
+4. Run the AI prediction script using Python.
+5. Launch the dashboard to monitor sensor data and alerts.
 
 ## Contributors
 
