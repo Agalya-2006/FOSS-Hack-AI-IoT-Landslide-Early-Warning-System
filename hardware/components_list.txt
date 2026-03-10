@@ -1,0 +1,6 @@
+ESP32 Microcontroller
+Rainfall Sensor
+Soil Moisture Sensor
+Water Level Sensor
+Vibration Sensor
+WiFi Module
