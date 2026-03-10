@@ -54,4 +54,16 @@ The prototype consists of sensor nodes installed on slopes and near water bodies
 3. Geological Survey Reports on Landslides and Flood Risk  
 4. World Meteorological Organization Disaster Monitoring Studies  
 
-## Project Structure
+## Installation
+
+Install Python and Arduino IDE.
+Connect sensors to ESP32 or Arduino.
+Upload firmware using Arduino IDE.
+Run the AI prediction script using Python.
+Launch the dashboard to monitor sensor data and alerts.
+
+## Contributors
+
+Agalya M
+Gobika N
+Priyadharshini R
