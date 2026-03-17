@@ -1,6 +1,5 @@
-# FOSS-Hack-AI-IoT-Landslide-Early-Warning-System
-AI and IoT-based early warning system for landslides and floods developed for FOSS Hack GGITS 2026.
 # AI and IoT-Driven Early Warning System for Landslides and Floods in Hilly Regions
+AI and IoT-based early warning system for landslides and floods developed for FOSS Hack GGITS 2026.
 
 ## Problem Statement
 Hilly regions are highly vulnerable to landslides and floods due to heavy rainfall, soil instability, and rising water levels. Traditional warning systems often fail to provide timely alerts, resulting in damage to infrastructure and loss of human lives.
@@ -62,6 +61,22 @@ The prototype consists of sensor nodes installed on slopes and near water bodies
 4. Run the AI prediction script using Python.
 5. Launch the dashboard to monitor sensor data and alerts.
 
+## 📊 Model Output
+
+The AI model predicts landslide risk based on environmental data.
+
+Example Output:
+- Prediction: High Landslide Risk ⚠️
+- Prediction: Safe Condition ✅
+
+Model Accuracy: ~63%
+
+## 📁 Project Structure
+
+- dataset/ → Contains dataset used for training  
+- code/ → Contains AI model (Google Colab notebook)  
+- architecture/ → System design diagram
+  
 ## Contributors
 
 - Agalya M
