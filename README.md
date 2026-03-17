@@ -61,7 +61,7 @@ The prototype consists of sensor nodes installed on slopes and near water bodies
 4. Run the AI prediction script using Python.
 5. Launch the dashboard to monitor sensor data and alerts.
 
-## 📊 Model Output
+## Model Output
 
 The AI model predicts landslide risk based on environmental data.
 
@@ -71,7 +71,7 @@ Example Output:
 
 Model Accuracy: ~63%
 
-## 📁 Project Structure
+## Project Structure
 
 - dataset/ → Contains dataset used for training  
 - code/ → Contains AI model (Google Colab notebook)  
