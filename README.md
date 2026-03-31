@@ -76,6 +76,9 @@ Model Accuracy: ~63%
 - dataset/ → Contains dataset used for training  
 - code/ → Contains AI model (Google Colab notebook)  
 - architecture/ → System design diagram
+
+## 🎯 Problem Solved
+This project helps in predicting landslide risks early using AI and environmental data, which can reduce damage and save lives in vulnerable regions.
   
 ## Contributors
 
