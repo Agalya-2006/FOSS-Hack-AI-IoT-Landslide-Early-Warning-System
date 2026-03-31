@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LandGuard AI — Early Warning System</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a0e;
+    --surface: #0c1a22;
+    --border: #1a3040;
+    --accent: #00e5ff;
+    --warn: #ff6b00;
+    --danger: #ff1744;
+    --safe: #00e676;
+    --text: #e0f0f8;
+    --muted: #4a7080;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glowing orb */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0,229,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    animation: pulse 4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    background: rgba(5,10,14,0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .nav-logo span {
+    color: var(--warn);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,230,118,0.1);
+    border: 1px solid rgba(0,230,118,0.3);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--safe);
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--safe);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 40px 80px;
+  }
+
+  .hero-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(0,229,255,0.3);
+    padding: 6px 16px;
+    border-radius: 4px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.8s ease forwards;
+    opacity: 0;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    animation: fadeUp 0.8s 0.15s ease forwards;
+    opacity: 0;
+  }
+
+  .hero h1 .highlight {
+    color: var(--accent);
+    position: relative;
+  }
+
+  .hero h1 .warn-text { color: var(--warn); }
+
+  .hero p {
+    max-width: 560px;
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin-bottom: 48px;
+    animation: fadeUp 0.8s 0.3s ease forwards;
+    opacity: 0;
+  }
+
+  .hero-btns {
+    display: flex;
+    gap: 16px;
+    animation: fadeUp 0.8s 0.45s ease forwards;
+    opacity: 0;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 14px 32px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .btn-primary:hover {
+    background: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,229,255,0.3);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    padding: 14px 32px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-item {
+    padding: 32px 40px;
+    border-right: 1px solid var(--border);
+    animation: fadeUp 0.6s ease forwards;
+    opacity: 0;
+  }
+
+  .stat-item:last-child { border-right: none; }
+
+  .stat-num {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* DASHBOARD SECTION */
+  .section {
+    position: relative;
+    z-index: 1;
+    padding: 100px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    font-weight: 800;
+    margin-bottom: 60px;
+    line-height: 1.1;
+  }
+
+  /* SENSOR DASHBOARD */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .sensor-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .sensor-card:hover { border-color: var(--accent); }
+
+  .sensor-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+
+  .sensor-card:hover::before { transform: scaleX(1); }
+
+  .sensor-icon {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+  }
+
+  .sensor-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .sensor-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .sensor-unit {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .sensor-bar {
+    margin-top: 16px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .sensor-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  /* RISK PANEL */
+  .risk-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: center;
+    margin-top: 16px;
+  }
+
+  .risk-gauge {
+    text-align: center;
+  }
+
+  .risk-circle {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    border: 3px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    position: relative;
+    background: conic-gradient(var(--warn) 0deg, var(--warn) 152deg, var(--border) 152deg);
+    animation: spin-in 1.2s ease forwards;
+  }
+
+  @keyframes spin-in {
+    from { background: conic-gradient(var(--warn) 0deg, var(--warn) 0deg, var(--border) 0deg); }
+    to { background: conic-gradient(var(--warn) 0deg, var(--warn) 152deg, var(--border) 152deg); }
+  }
+
+  .risk-inner {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+  }
+
+  .risk-pct {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--warn);
+    line-height: 1;
+  }
+
+  .risk-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .risk-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--warn);
+    margin-bottom: 8px;
+  }
+
+  .risk-status {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  /* ARCHITECTURE */
+  .arch-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    padding: 20px 0;
+  }
+
+  .arch-node {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 20px;
+    text-align: center;
+    min-width: 140px;
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+
+  .arch-node:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+  }
+
+  .arch-node-icon { font-size: 2rem; margin-bottom: 10px; }
+
+  .arch-node-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .arch-node-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+  }
+
+  .arch-arrow {
+    flex-shrink: 0;
+    width: 40px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--border), var(--accent));
+    position: relative;
+  }
+
+  .arch-arrow::after {
+    content: '▶';
+    position: absolute;
+    right: -6px;
+    top: -7px;
+    color: var(--accent);
+    font-size: 0.7rem;
+  }
+
+  /* ALERT SECTION */
+  .alerts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .alert-card {
+    border-radius: 8px;
+    padding: 28px;
+    border: 1px solid;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .alert-card.safe {
+    background: rgba(0,230,118,0.05);
+    border-color: rgba(0,230,118,0.3);
+  }
+
+  .alert-card.warning {
+    background: rgba(255,107,0,0.05);
+    border-color: rgba(255,107,0,0.4);
+  }
+
+  .alert-card.danger {
+    background: rgba(255,23,68,0.05);
+    border-color: rgba(255,23,68,0.4);
+    animation: dangerPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes dangerPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,23,68,0); }
+    50% { box-shadow: 0 0 20px 4px rgba(255,23,68,0.15); }
+  }
+
+  .alert-level {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+  }
+
+  .alert-card.safe .alert-level { color: var(--safe); }
+  .alert-card.warning .alert-level { color: var(--warn); }
+  .alert-card.danger .alert-level { color: var(--danger); }
+
+  .alert-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .alert-desc {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* PREDICTOR */
+  .predictor {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 40px;
+  }
+
+  .predictor-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+
+  .input-group label {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .input-group input, .input-group select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .input-group input:focus, .input-group select:focus {
+    border-color: var(--accent);
+  }
+
+  .input-group select option { background: var(--surface); }
+
+  .predict-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #000;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    padding: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+  }
+
+  .predict-btn:hover {
+    background: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,229,255,0.3);
+  }
+
+  .result-box {
+    margin-top: 24px;
+    padding: 24px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    display: none;
+    animation: fadeUp 0.4s ease forwards;
+  }
+
+  .result-box.show { display: block; }
+  .result-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .result-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+
+  /* FOOTER */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-left {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  .footer-right {
+    display: flex;
+    gap: 24px;
+  }
+
+  .footer-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 100px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .nav-links { display: none; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .dashboard-grid { grid-template-columns: 1fr 1fr; }
+    .alerts-grid { grid-template-columns: 1fr; }
+    .predictor-grid { grid-template-columns: 1fr; }
+    .risk-panel { grid-template-columns: 1fr; }
+    .section { padding: 60px 20px; }
+    footer { flex-direction: column; gap: 20px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Land<span>Guard</span> AI</div>
+  <ul class="nav-links">
+    <li><a href="#dashboard">Dashboard</a></li>
+    <li><a href="#architecture">System</a></li>
+    <li><a href="#alerts">Alerts</a></li>
+    <li><a href="#predict">Predictor</a></li>
+  </ul>
+  <div class="status-pill">
+    <div class="status-dot"></div>
+    System Online
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">FOSS Hack GGITS 2026 — AI + IoT Project</div>
+  <h1>
+    <span class="warn-text">Early Warning</span><br>
+    System for<br>
+    <span class="highlight">Landslides & Floods</span>
+  </h1>
+  <p>Real-time AI-powered disaster detection using IoT sensors. Protecting hilly regions from landslides and floods with intelligent monitoring and instant alerts.</p>
+  <div class="hero-btns">
+    <a href="#dashboard" class="btn-primary">View Live Dashboard</a>
+    <a href="#predict" class="btn-secondary">Try AI Predictor →</a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat-item" style="animation-delay:0.1s">
+    <div class="stat-num">63%</div>
+    <div class="stat-label">Model Accuracy</div>
+  </div>
+  <div class="stat-item" style="animation-delay:0.2s">
+    <div class="stat-num">5</div>
+    <div class="stat-label">Active Sensors</div>
+  </div>
+  <div class="stat-item" style="animation-delay:0.3s">
+    <div class="stat-num">24/7</div>
+    <div class="stat-label">Real-time Monitoring</div>
+  </div>
+  <div class="stat-item" style="animation-delay:0.4s">
+    <div class="stat-num">&lt;2s</div>
+    <div class="stat-label">Alert Response Time</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<section class="section" id="dashboard">
+  <div class="section-label">// Live Sensor Data</div>
+  <div class="section-title">Real-Time Environmental<br>Monitoring Dashboard</div>
+
+  <div class="dashboard-grid">
+    <div class="sensor-card">
+      <div class="sensor-icon">🌧️</div>
+      <div class="sensor-name">Rainfall Intensity</div>
+      <div class="sensor-value" id="rainfall">72</div>
+      <div class="sensor-unit">mm/hr</div>
+      <div class="sensor-bar"><div class="sensor-fill" id="rainfall-bar" style="width:72%;background:var(--accent)"></div></div>
+    </div>
+    <div class="sensor-card">
+      <div class="sensor-icon">💧</div>
+      <div class="sensor-name">Soil Moisture</div>
+      <div class="sensor-value" id="moisture">85</div>
+      <div class="sensor-unit">%</div>
+      <div class="sensor-bar"><div class="sensor-fill" id="moisture-bar" style="width:85%;background:var(--warn)"></div></div>
+    </div>
+    <div class="sensor-card">
+      <div class="sensor-icon">🌊</div>
+      <div class="sensor-name">Water Level</div>
+      <div class="sensor-value" id="water">1.4</div>
+      <div class="sensor-unit">meters</div>
+      <div class="sensor-bar"><div class="sensor-fill" id="water-bar" style="width:56%;background:var(--safe)"></div></div>
+    </div>
+    <div class="sensor-card">
+      <div class="sensor-icon">📳</div>
+      <div class="sensor-name">Ground Vibration</div>
+      <div class="sensor-value" id="vibration">0.32</div>
+      <div class="sensor-unit">m/s²</div>
+      <div class="sensor-bar"><div class="sensor-fill" id="vibration-bar" style="width:32%;background:var(--accent)"></div></div>
+    </div>
+    <div class="sensor-card">
+      <div class="sensor-icon">🌡️</div>
+      <div class="sensor-name">Temperature</div>
+      <div class="sensor-value" id="temp">24</div>
+      <div class="sensor-unit">°C</div>
+      <div class="sensor-bar"><div class="sensor-fill" id="temp-bar" style="width:48%;background:var(--safe)"></div></div>
+    </div>
+    <div class="sensor-card">
+      <div class="sensor-icon">📡</div>
+      <div class="sensor-name">Signal Strength</div>
+      <div class="sensor-value">98</div>
+      <div class="sensor-unit">% WiFi</div>
+      <div class="sensor-bar"><div class="sensor-fill" style="width:98%;background:var(--safe)"></div></div>
+    </div>
+  </div>
+
+  <div class="risk-panel">
+    <div class="risk-gauge">
+      <div class="risk-circle">
+        <div class="risk-inner">
+          <div class="risk-pct">42%</div>
+          <div class="risk-label">Risk Level</div>
+        </div>
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--muted)">Updated 2s ago</div>
+    </div>
+    <div>
+      <div class="risk-title">⚠️ Moderate Risk Detected</div>
+      <div class="risk-status">
+        AI Model: Random Forest Classifier<br>
+        Prediction: Moderate Landslide Risk<br>
+        Confidence: 63%<br>
+        Recommended Action: Monitor closely<br>
+        Alert Status: Authorities Notified<br>
+        Next Scan: 30 seconds
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="section" id="architecture" style="background:rgba(12,26,34,0.5);max-width:100%;padding-left:40px;padding-right:40px;">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="section-label">// System Design</div>
+    <div class="section-title">Architecture Flow</div>
+    <div class="arch-flow">
+      <div class="arch-node">
+        <div class="arch-node-icon">🌧️</div>
+        <div class="arch-node-title">Sensors</div>
+        <div class="arch-node-sub">Rain · Soil · Water<br>Vibration</div>
+      </div>
+      <div class="arch-arrow"></div>
+      <div class="arch-node">
+        <div class="arch-node-icon">🔌</div>
+        <div class="arch-node-title">ESP32 / Arduino</div>
+        <div class="arch-node-sub">IoT Microcontroller<br>Data Collection</div>
+      </div>
+      <div class="arch-arrow"></div>
+      <div class="arch-node">
+        <div class="arch-node-icon">☁️</div>
+        <div class="arch-node-title">Cloud Server</div>
+        <div class="arch-node-sub">Data Upload<br>Storage</div>
+      </div>
+      <div class="arch-arrow"></div>
+      <div class="arch-node">
+        <div class="arch-node-icon">🤖</div>
+        <div class="arch-node-title">AI Model</div>
+        <div class="arch-node-sub">Risk Prediction<br>ML Algorithm</div>
+      </div>
+      <div class="arch-arrow"></div>
+      <div class="arch-node">
+        <div class="arch-node-icon">🚨</div>
+        <div class="arch-node-title">Alert System</div>
+        <div class="arch-node-sub">SMS · Dashboard<br>Mobile App</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ALERTS -->
+<section class="section" id="alerts">
+  <div class="section-label">// Alert Levels</div>
+  <div class="section-title">Risk Classification<br>& Response Protocols</div>
+  <div class="alerts-grid">
+    <div class="alert-card safe">
+      <div class="alert-level">● Safe Zone</div>
+      <div class="alert-title">No Risk Detected</div>
+      <div class="alert-desc">All sensor readings within normal range. Environmental conditions stable. No immediate threat to life or property.</div>
+    </div>
+    <div class="alert-card warning">
+      <div class="alert-level">▲ Warning Level</div>
+      <div class="alert-title">Moderate Risk</div>
+      <div class="alert-desc">Elevated soil moisture or rainfall detected. Authorities notified. Residents in high-risk zones advised to stay alert.</div>
+    </div>
+    <div class="alert-card danger">
+      <div class="alert-level">🚨 Critical Alert</div>
+      <div class="alert-title">High Risk — Evacuate</div>
+      <div class="alert-desc">AI model predicts imminent landslide or flood risk. Emergency SMS alerts sent. Immediate evacuation recommended.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PREDICTOR -->
+<section class="section" id="predict">
+  <div class="section-label">// AI Prediction Engine</div>
+  <div class="section-title">Try the Landslide<br>Risk Predictor</div>
+  <div class="predictor">
+    <div class="predictor-grid">
+      <div class="input-group">
+        <label>Rainfall (mm/hr)</label>
+        <input type="number" id="in-rainfall" placeholder="e.g. 80" min="0" max="200">
+      </div>
+      <div class="input-group">
+        <label>Soil Moisture (%)</label>
+        <input type="number" id="in-moisture" placeholder="e.g. 75" min="0" max="100">
+      </div>
+      <div class="input-group">
+        <label>Water Level (m)</label>
+        <input type="number" id="in-water" placeholder="e.g. 1.5" step="0.1">
+      </div>
+      <div class="input-group">
+        <label>Ground Vibration (m/s²)</label>
+        <input type="number" id="in-vibration" placeholder="e.g. 0.5" step="0.01">
+      </div>
+    </div>
+    <button class="predict-btn" onclick="predict()">RUN AI PREDICTION →</button>
+    <div class="result-box" id="result-box">
+      <div class="result-label">AI Prediction Result</div>
+      <div class="result-value" id="result-value"></div>
+      <div style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--muted);margin-top:8px" id="result-desc"></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    © 2026 LandGuard AI — FOSS Hack GGITS 2026<br>
+    Contributors: Agalya M · Gobika N · Priyadharshini R
+  </div>
+  <div class="footer-right">
+    <span class="footer-tag">MIT License</span>
+    <span class="footer-tag">Open Source</span>
+    <span class="footer-tag">ESP32 + Python</span>
+  </div>
+</footer>
+
+<script>
+  // Animate sensor values live
+  function randomize(id, min, max, dec=0) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const val = (Math.random() * (max - min) + min).toFixed(dec);
+    el.textContent = val;
+    return parseFloat(val);
+  }
+
+  function updateSensors() {
+    const r = randomize('rainfall', 50, 95);
+    const m = randomize('moisture', 60, 95);
+    const w = randomize('water', 0.8, 2.5, 1);
+    const v = randomize('vibration', 0.1, 0.8, 2);
+    randomize('temp', 18, 32);
+
+    document.getElementById('rainfall-bar').style.width = (r/2)+'%';
+    document.getElementById('moisture-bar').style.width = m+'%';
+    document.getElementById('water-bar').style.width = (parseFloat(w)/3*100)+'%';
+    document.getElementById('vibration-bar').style.width = (parseFloat(v)*100)+'%';
+  }
+
+  setInterval(updateSensors, 3000);
+
+  // AI Predictor
+  function predict() {
+    const rainfall = parseFloat(document.getElementById('in-rainfall').value) || 0;
+    const moisture = parseFloat(document.getElementById('in-moisture').value) || 0;
+    const water = parseFloat(document.getElementById('in-water').value) || 0;
+    const vibration = parseFloat(document.getElementById('in-vibration').value) || 0;
+
+    let score = 0;
+    if (rainfall > 80) score += 35;
+    else if (rainfall > 50) score += 20;
+    else score += 5;
+
+    if (moisture > 80) score += 30;
+    else if (moisture > 60) score += 18;
+    else score += 5;
+
+    if (water > 2.0) score += 20;
+    else if (water > 1.2) score += 10;
+    else score += 2;
+
+    if (vibration > 0.5) score += 15;
+    else if (vibration > 0.3) score += 8;
+    else score += 1;
+
+    const box = document.getElementById('result-box');
+    const val = document.getElementById('result-value');
+    const desc = document.getElementById('result-desc');
+    box.classList.add('show');
+
+    if (score >= 70) {
+      val.textContent = '🚨 HIGH RISK — Landslide Likely';
+      val.style.color = 'var(--danger)';
+      desc.textContent = 'Risk Score: '+score+'/100 · Immediate evacuation recommended · Alerts sent to authorities';
+      box.style.borderColor = 'rgba(255,23,68,0.5)';
+      box.style.background = 'rgba(255,23,68,0.05)';
+    } else if (score >= 40) {
+      val.textContent = '⚠️ MODERATE RISK — Stay Alert';
+      val.style.color = 'var(--warn)';
+      desc.textContent = 'Risk Score: '+score+'/100 · Monitor closely · Authorities have been notified';
+      box.style.borderColor = 'rgba(255,107,0,0.4)';
+      box.style.background = 'rgba(255,107,0,0.05)';
+    } else {
+      val.textContent = '✅ LOW RISK — Safe Conditions';
+      val.style.color = 'var(--safe)';
+      desc.textContent = 'Risk Score: '+score+'/100 · All readings normal · No immediate threat detected';
+      box.style.borderColor = 'rgba(0,230,118,0.3)';
+      box.style.background = 'rgba(0,230,118,0.05)';
+    }
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'});
+    });
+  });
+</script>
+</body>
+</html>
